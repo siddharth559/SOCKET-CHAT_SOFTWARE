@@ -26,7 +26,7 @@ def IO(CONNECTION,index):
         data = CONNECTION.recv(1024)
 
         try:
-            given_file = eval(data)
+            given_file = eval(data.decode())
             file = open(given_file['file'],'wb')
             byte_data_recieved = CONNECTION.recv(4096)
             while byte_data_recieved:

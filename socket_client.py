@@ -14,7 +14,7 @@ root= tk.Tk()
 OSs={
     'darwin' : ('Mac','/'),
      'linux': ('Linux','/'),
-     'win' : ('Windows','\\')
+     'win' : ('Windows','/')
      }
 
 OS_NAME = sys.platform

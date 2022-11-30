@@ -9,7 +9,7 @@ PORT = 52345
 
 HOST = ""#"103.197.36.6"#for connecting in local "192.168.1.110"  "" for all connection
 A.bind((HOST,PORT))
-A.listen(5)
+A.listen(10)
 
 
 io_threads = []
@@ -19,31 +19,47 @@ LOCK = th.Lock()
 
 
 def IO(CONNECTION,index):
+    BUFFER = 4096
     print("thread started with",connections[-1][-1])
     CONNECTION.sendall("WELCOME".encode())
     name = CONNECTION.recv(1024).decode()
     while 1:
         data = CONNECTION.recv(1024)
-
         try:
+            #print(data.decode())
             given_file = eval(data.decode())
+            print(2.1)
             file = open(given_file['file'],'wb')
-            byte_data_recieved = CONNECTION.recv(4096)
-            while byte_data_recieved:
-                file.write(byte_data_recieved)
-                byte_data_recieved = CONNECTION.recv(4096)
+            print(2.2)
+            while 1:
+                
+                received_bytes = CONNECTION.recv(4096)
+
+                if not received_bytes:
+                    break
+                
+                file.write(received_bytes)
+            print(2.3)
+
+            print(2.4)
+
             file.close()
+            print(1.5)
             print(os.path.getsize(file.name) == given_file['size'])
+            print(1.6)
+
+            CONNECTION.sendall('recieved'.encode())
             
             for i in connections:
                 i[0].sendall(data)
 
-        except:
+        except Exception as emp:
+            print(emp)
             try: print(name,":",data.decode())
             except: print("some error")
 
             if not data:
-                CONNECTION.sendall(''.encode())
+                #CONNECTION.sendall(''.encode())
                 #LOCK.release()
                 break
             for i in connections:

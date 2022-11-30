@@ -1,5 +1,6 @@
 from tkinter import filedialog
 from tkinter import ttk
+import time
 import os
 import sys 
 import socket as sk
@@ -11,8 +12,8 @@ from trace import Trace
 root= tk.Tk()
 
 OSs={
-    'darwin' : ('Mac','//'),
-     'linux': ('Linux','//'),
+    'darwin' : ('Mac','/'),
+     'linux': ('Linux','/'),
      'win' : ('Windows','\\')
      }
 
@@ -23,10 +24,11 @@ for i in OSs:
 
 A = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 PORT = 52345
-HOST = "192.168.1.109"
+HOST = "192.168.1.100"
 A.connect((HOST,PORT))
 OPEN = True
 LOCK = th.Lock()
+FLAG = 1
 
 SCROLLBAR = tk.Scrollbar(root)
 MESSAGES = tk.Canvas(root, bg='white', width=130, yscrollcommand=SCROLLBAR.set)
@@ -68,11 +70,14 @@ def print_recv():
             MESSAGES.update()
             MESSAGES.config(scrollregion=MESSAGES.bbox('all'))
         except:
-            tk.Label(FRAME,text = data.decode(),relief='flat',fg = 'grey',bg='white').pack()
+            l = tk.Label(FRAME,text = data.decode(),relief='flat',fg = 'grey',bg='white')
+            l.pack()
             MESSAGES.update()
             MESSAGES.config(scrollregion=MESSAGES.bbox('all'))
 
 t1 = th.Thread(target=print_recv)
+
+username = ''
 
 def send_but():
     data = ENTRY.get()
@@ -80,9 +85,12 @@ def send_but():
     A.sendall(data.encode())
 
 def FTP():
+    global A
+    
     BUFFER = 4096
-    file = filedialog.askopenfile(title='OPEN',mode='rb',initialdir='/',filetypes=(
-        ('pdf files', '*.txt'),
+    file = filedialog.askopenfile(title='OPEN',mode='rb',initialdir='/home/siddharth/simplecpp/',filetypes=(
+        ('pdf files', '*.pdf'),
+        ('image files', '*.png'),
         ('All files', '*.*')
     ))
     name_of_file = file.name.split(sepr)[-1]
@@ -90,14 +98,37 @@ def FTP():
     PROGRESS.grid(row=3,sticky=tk.EW)
     PROGRESS['value'] = 0
     dictn = {'file':name_of_file,'size':size_of_file}
+    print(dictn)
     A.sendall(str(dictn).encode())
-    bytes = file.read(BUFFER)
-    while bytes:
-        A.sendall(bytes)
-        PROGRESS['value'] += len(bytes)/size_of_file*100
-        bytes = file.read(BUFFER)   
+    
+    
+    print(BUFFER)
+    #-------------------------------------------------------------
+    for i in range(int(size_of_file)//BUFFER):
+        bytes_read = file.read(BUFFER)
+        A.sendall(bytes_read)
+        PROGRESS['value'] += len(bytes_read)/size_of_file*100
+        time.sleep(0.1)
+    bytes_read = file.read(size_of_file%BUFFER)
+    A.sendall(bytes_read)
+    PROGRESS['value'] += len(bytes_read)/size_of_file*100  
+    #------------------------------------------------------------- 
+    print(1.2)  
     PROGRESS.grid_forget() 
     file.close()
+    time.sleep(1)
+    A.close()
+    time.sleep(1)
+    A.close()
+    time.sleep(2)
+    A = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
+    A.connect((HOST,PORT))
+    wel = A.recv(1024).decode()#welcome
+    print(username)
+    A.sendall(username.encode())
+    A.sendall('file sent'.encode() )
+
+
 
 
 def discon():
@@ -106,6 +137,7 @@ def discon():
     A.close()
     root.destroy()
     
+
 
 
 SEND.config(command = send_but)
@@ -118,17 +150,23 @@ t1.start()
 
 root.withdraw()
 #__________________________________
+
+def but_command():
+    global username
+    username += (entry_.get())
+    A.sendall(entry_.get().encode())
+    name_win.destroy()
+    root.deiconify()
 name_win = tk.Toplevel(root)
 name_ = tk.Label(name_win,text = 'enter name')
 entry_ = tk.Entry(name_win)
-but_ = tk.Button(name_win, text = 'send',command = lambda: [A.sendall(entry_.get().encode()),name_win.destroy()] )
+but_ = tk.Button(name_win, text = 'send',command = but_command)
 
 name_.pack(side='left')
 entry_.pack(side = 'right')
 but_.pack()
 name_win.wm_attributes('-topmost',1)
 #__________________________________
-root.deiconify()
 
 root.mainloop()
 print(OPEN, t1.is_alive())

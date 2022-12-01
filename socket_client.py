@@ -14,7 +14,7 @@ root= tk.Tk()
 OSs={
     'darwin' : ('Mac','/'),
      'linux': ('Linux','/'),
-     'win' : ('Windows','/')
+     'win' : ('Windows','\\')
      }
 
 OS_NAME = sys.platform
@@ -24,7 +24,7 @@ for i in OSs:
 
 A = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 PORT = 52345
-HOST = "192.168.1.100"
+HOST = "192.168.1.110"
 A.connect((HOST,PORT))
 OPEN = True
 LOCK = th.Lock()
@@ -126,7 +126,7 @@ def FTP():
     wel = A.recv(1024).decode()#welcome
     print(username)
     A.sendall(username.encode())
-    A.sendall('file sent'.encode() )
+    A.sendall('file sent'.encode())
 
 
 
